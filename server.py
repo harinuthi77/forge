@@ -8,6 +8,9 @@ from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
+from typing import List, Optional
+
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, validator
 
 logger = logging.getLogger(__name__)

@@ -102,7 +102,6 @@ export default function ForgePlatform() {
     setCurrentStep(initialSteps[0])
 
     try {
-      // Call backend API
       const response = await fetch('http://localhost:8000/execute', {
         method: 'POST',
         headers: {
@@ -116,24 +115,45 @@ export default function ForgePlatform() {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Task execution failed')
+        let errorMessage = 'Task execution failed'
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.detail || errorMessage
+        } catch (parseErr) {
+          console.warn('Unable to parse error payload', parseErr)
+        }
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
-      
-      // Update steps to completed
-      const completedSteps = initialSteps.map(step => ({
-        ...step,
-        status: 'completed',
-        timestamp: new Date()
-      }))
-      
-      setExecutionSteps(completedSteps)
-      setTaskResult(data)
-      
+
+      if (Array.isArray(data.steps) && data.steps.length > 0) {
+        setExecutionSteps(data.steps.map(step => ({
+          id: step.id,
+          action: step.action,
+          status: step.status,
+          timestamp: new Date()
+        })))
+      } else {
+        const completedSteps = initialSteps.map(step => ({
+          ...step,
+          status: 'completed',
+          timestamp: new Date()
+        }))
+        setExecutionSteps(completedSteps)
+      }
+
+      setTaskResult({
+        status: data.status || 'completed',
+        mode: data.mode || model,
+        message: data.message || 'Task finished successfully.',
+        data: data.data || {},
+        started_at: data.started_at,
+        completed_at: data.completed_at
+      })
+
       console.log('✅ Task completed:', data)
-      
+
     } catch (err) {
       console.error('❌ Error:', err)
       setError(err.message)

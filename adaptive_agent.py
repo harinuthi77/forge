@@ -1,15 +1,44 @@
 # adaptive_agent.py - SELF-LEARNING WEB AGENT WITH GUARANTEED RESULTS
-from playwright.sync_api import sync_playwright
-import anthropic
+import argparse
 import base64
-import time
-import random
+import importlib
+import importlib.util
 import json
+import random
 import sqlite3
+import sys
+import time
 from datetime import datetime
-from typing import Dict, List, Tuple, Optional
+from functools import lru_cache
+from typing import Dict, List, Optional, Tuple
 
-client = anthropic.Anthropic()
+
+def _require_module(module_name: str, install_hint: str):
+    """Ensure an optional dependency is available before importing it."""
+
+    if importlib.util.find_spec(module_name) is None:
+        raise ModuleNotFoundError(
+            f"Missing dependency '{module_name}'. Install it with: {install_hint}"
+        )
+    return importlib.import_module(module_name)
+
+
+@lru_cache(maxsize=1)
+def get_sync_playwright():
+    """Lazy-load Playwright only when the interactive agent is invoked."""
+
+    module = _require_module(
+        "playwright.sync_api", "pip install playwright && playwright install"
+    )
+    return module.sync_playwright
+
+
+@lru_cache(maxsize=1)
+def get_anthropic_client():
+    """Instantiate the Anthropic client on demand."""
+
+    module = _require_module("anthropic", "pip install anthropic")
+    return module.Anthropic()
 
 # ============ LEARNING DATABASE ============
 def init_learning_db():
@@ -485,15 +514,19 @@ def remove_labels(page):
 # ============ MAIN ADAPTIVE AGENT ============
 def adaptive_agent(task: str):
     """Self-learning agent that adapts and guarantees results"""
-    
+
     # Initialize learning database
     learning_db = init_learning_db()
     session_id = datetime.now().strftime("%Y%m%d_%H%M%S")
     reflection = AgentReflection(learning_db)
-    
+
+    # Lazily load heavy dependencies only when the interactive agent runs.
+    sync_playwright = get_sync_playwright()
+    client = get_anthropic_client()
+
     print(f"🧠 ADAPTIVE WEB AGENT - Session: {session_id}")
     print(f"🎯 TASK: {task}\n")
-    
+
     # Extract task type and domain
     task_type = "search" if "search" in task.lower() or "find" in task.lower() else "navigate"
     
@@ -815,9 +848,51 @@ REASON: [strategic reasoning - why this moves us toward RESULTS]"""
     print(f"\n💾 Learning data saved to: agent_learning.db")
     print(f"📊 Session: {session_id}")
 
-if __name__ == "__main__":
+def main() -> None:
+    """Entry point for starting the UI or running the CLI agent."""
+
+    parser = argparse.ArgumentParser(
+        description="Launch the Forge automation UI or run the interactive CLI agent."
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("ui", "cli"),
+        default="ui",
+        help="Launch the web UI (default) or run the legacy CLI agent.",
+    )
+    parser.add_argument("--host", default="127.0.0.1", help="Host for the web UI server.")
+    parser.add_argument(
+        "--port", type=int, default=8000, help="Port for the web UI server."
+    )
+    args = parser.parse_args()
+
+    if args.mode == "ui":
+        uvicorn = _require_module("uvicorn", "pip install uvicorn[standard]")
+        ui_url = f"http://{args.host}:{args.port}/"
+        print("🚀 Starting Forge platform UI")
+        print(f"👉 Open {ui_url} in your browser to interact with the agent.")
+        uvicorn.run(
+            "server:app",
+            host=args.host,
+            port=args.port,
+            reload=False,
+            log_level="info",
+        )
+        return
+
     task = input("What should I do? ")
     if not task:
-        task = "go to walmart.com and find me queen bed frames under $250 with at least 1500 reviews and 4+ stars"
-    
-    adaptive_agent(task)
+        task = (
+            "go to walmart.com and find me queen bed frames under $250 with at least "
+            "1500 reviews and 4+ stars"
+        )
+
+    try:
+        adaptive_agent(task)
+    except ModuleNotFoundError as exc:
+        print(f"❌ {exc}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

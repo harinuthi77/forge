@@ -3,12 +3,20 @@ from __future__ import annotations
 
 import logging
 from datetime import datetime
+from pathlib import Path
+from typing import List, Optional
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, validator
 
 logger = logging.getLogger(__name__)
+
+BASE_DIR = Path(__file__).parent
+STATIC_DIR = BASE_DIR / "static"
 
 app = FastAPI(
     title="Forge Automation API",
@@ -95,3 +103,13 @@ def execute_task(request: ExecuteRequest) -> ExecuteResponse:
         started_at=started_at,
         completed_at=completed_at,
     )
+
+
+@app.get("/", response_class=FileResponse)
+def serve_ui() -> FileResponse:
+    """Serve the lightweight web UI for interacting with the agent."""
+
+    index_file = STATIC_DIR / "index.html"
+    if not index_file.exists():
+        raise HTTPException(status_code=404, detail="UI assets are missing.")
+    return FileResponse(index_file)

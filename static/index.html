@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forge Automation Platform</title>
+  <style>
+    :root {
+      color-scheme: dark light;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      padding: 2rem 1rem;
+    }
+
+    .app-shell {
+      width: min(960px, 100%);
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(14px);
+      overflow: hidden;
+    }
+
+    header {
+      padding: 1.75rem 2rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      background: linear-gradient(120deg, rgba(56, 189, 248, 0.14), rgba(129, 140, 248, 0.14));
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: #f8fafc;
+    }
+
+    header p {
+      margin: 0.35rem 0 0;
+      color: rgba(226, 232, 240, 0.75);
+      font-size: 0.95rem;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.75rem;
+      padding: 1.75rem 2rem 2rem;
+    }
+
+    .card {
+      padding: 1.5rem;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.08);
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.6rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: rgba(15, 23, 42, 0.85);
+      color: inherit;
+      resize: vertical;
+      font-size: 1rem;
+      line-height: 1.5;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: rgba(129, 140, 248, 0.65);
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25);
+    }
+
+    .controls {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+
+    select,
+    button {
+      padding: 0.65rem 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(15, 23, 42, 0.9);
+      color: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    button {
+      background: linear-gradient(135deg, #6366f1, #06b6d4);
+      border: none;
+      color: #f8fafc;
+      box-shadow: 0 12px 30px rgba(99, 102, 241, 0.35);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(6, 182, 212, 0.35);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .tool-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .tool-list li {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 999px;
+      background: rgba(71, 85, 105, 0.25);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      font-size: 0.9rem;
+    }
+
+    .tool-list input[type="checkbox"] {
+      accent-color: #6366f1;
+    }
+
+    .status-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      background: rgba(45, 212, 191, 0.15);
+      border: 1px solid rgba(45, 212, 191, 0.35);
+      color: #5eead4;
+      font-weight: 600;
+    }
+
+    .error {
+      background: rgba(248, 113, 113, 0.12);
+      border-color: rgba(248, 113, 113, 0.35);
+      color: #fecdd3;
+    }
+
+    .steps {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .step {
+      padding: 0.75rem 0.9rem;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(15, 23, 42, 0.6);
+      display: flex;
+      justify-content: space-between;
+      gap: 1.25rem;
+      align-items: center;
+    }
+
+    .step span {
+      font-size: 0.92rem;
+    }
+
+    .timestamp {
+      font-size: 0.8rem;
+      color: rgba(226, 232, 240, 0.6);
+    }
+
+    .result-panel {
+      border-radius: 12px;
+      padding: 1rem;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(15, 23, 42, 0.55);
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .result-panel pre {
+      margin: 0;
+      padding: 0.75rem;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      overflow-x: auto;
+      font-size: 0.85rem;
+    }
+
+    footer {
+      text-align: center;
+      padding: 1rem 2rem 1.5rem;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      font-size: 0.85rem;
+      color: rgba(148, 163, 184, 0.75);
+    }
+
+    @media (max-width: 720px) {
+      header, .content, footer {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+      }
+
+      .app-shell {
+        border-radius: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header>
+      <h1>⚒️ Forge Automation Platform</h1>
+      <p>Trigger backend execution, review progress, and inspect final results.</p>
+    </header>
+
+    <div class="content">
+      <section class="card">
+        <form id="task-form">
+          <label for="task-input">Task description</label>
+          <textarea id="task-input" placeholder="e.g. Analyze the pricing pages of top AI agents and summarize differences." required></textarea>
+
+          <div class="controls">
+            <label>
+              Model
+              <select id="model-select">
+                <option value="claude">Claude</option>
+                <option value="gpt">GPT</option>
+              </select>
+            </label>
+
+            <button type="submit" id="run-button">Run task</button>
+          </div>
+
+          <div>
+            <label>Tools</label>
+            <ul class="tool-list">
+              <li><label><input type="checkbox" value="web" checked /> Web</label></li>
+              <li><label><input type="checkbox" value="code" checked /> Code</label></li>
+              <li><label><input type="checkbox" value="image" /> Image</label></li>
+              <li><label><input type="checkbox" value="db" /> Data</label></li>
+              <li><label><input type="checkbox" value="api" /> API</label></li>
+            </ul>
+          </div>
+        </form>
+      </section>
+
+      <section class="card status-box">
+        <div>
+          <span class="badge" id="status-badge">Idle</span>
+        </div>
+        <div id="status-message">Submit a task to begin execution.</div>
+        <ul class="steps" id="step-list"></ul>
+        <div class="result-panel" id="result-panel" hidden>
+          <strong>Result summary</strong>
+          <div id="result-status"></div>
+          <div id="result-timing"></div>
+          <pre id="result-data"></pre>
+        </div>
+      </section>
+    </div>
+
+    <footer>
+      Launch the UI with <code>python adaptive_agent.py</code>. Use <code>--mode cli</code> for the legacy console agent.
+    </footer>
+  </div>
+
+  <script>
+    const form = document.getElementById('task-form');
+    const button = document.getElementById('run-button');
+    const statusBadge = document.getElementById('status-badge');
+    const statusMessage = document.getElementById('status-message');
+    const stepList = document.getElementById('step-list');
+    const resultPanel = document.getElementById('result-panel');
+    const resultStatus = document.getElementById('result-status');
+    const resultTiming = document.getElementById('result-timing');
+    const resultData = document.getElementById('result-data');
+
+    const badgeStates = {
+      idle: { text: 'Idle', className: 'badge' },
+      running: { text: 'Running', className: 'badge' },
+      success: { text: 'Completed', className: 'badge' },
+      error: { text: 'Error', className: 'badge error' }
+    };
+
+    function updateBadge(state) {
+      const { text, className } = badgeStates[state] || badgeStates.idle;
+      statusBadge.textContent = text;
+      statusBadge.className = className;
+    }
+
+    function serializeTools() {
+      return Array.from(form.querySelectorAll('input[type="checkbox"]:checked')).map(el => el.value);
+    }
+
+    function renderSteps(steps = []) {
+      stepList.innerHTML = '';
+      steps.forEach(step => {
+        const li = document.createElement('li');
+        li.className = 'step';
+        const timestamp = step.timestamp ? new Date(step.timestamp).toLocaleTimeString() : 'pending';
+        li.innerHTML = `<span><strong>${step.action}</strong><br/><small>Status: ${step.status}</small></span><span class="timestamp">${timestamp}</span>`;
+        stepList.appendChild(li);
+      });
+    }
+
+    async function runTask(event) {
+      event.preventDefault();
+      const task = document.getElementById('task-input').value.trim();
+      if (!task) return;
+
+      updateBadge('running');
+      statusMessage.textContent = 'Executing task…';
+      button.disabled = true;
+      resultPanel.hidden = true;
+      renderSteps([
+        { id: 1, action: 'Initializing agent', status: 'in-progress' },
+        { id: 2, action: 'Analyzing task', status: 'pending' },
+        { id: 3, action: 'Executing actions', status: 'pending' },
+        { id: 4, action: 'Gathering results', status: 'pending' },
+        { id: 5, action: 'Finalizing output', status: 'pending' }
+      ]);
+
+      try {
+        const response = await fetch('/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            task,
+            model: document.getElementById('model-select').value,
+            tools: serializeTools()
+          })
+        });
+
+        if (!response.ok) {
+          const detail = await response.json().catch(() => ({ detail: 'Task execution failed.' }));
+          throw new Error(detail.detail || 'Task execution failed.');
+        }
+
+        const data = await response.json();
+
+        updateBadge('success');
+        statusMessage.textContent = data.message || 'Task completed successfully.';
+        renderSteps(data.steps || []);
+
+        resultPanel.hidden = false;
+        resultStatus.textContent = `Status: ${data.status || 'completed'} — Mode: ${data.mode || 'unknown'}`;
+        if (data.started_at && data.completed_at) {
+          const started = new Date(data.started_at);
+          const completed = new Date(data.completed_at);
+          const duration = ((completed - started) / 1000).toFixed(2);
+          resultTiming.textContent = `Started ${started.toLocaleTimeString()} — Completed ${completed.toLocaleTimeString()} — Duration ${duration}s`;
+        } else {
+          resultTiming.textContent = '';
+        }
+        resultData.textContent = JSON.stringify(data.data || {}, null, 2);
+      } catch (error) {
+        console.error(error);
+        updateBadge('error');
+        statusMessage.textContent = error.message || 'Unexpected error occurred.';
+        renderSteps();
+        button.disabled = false;
+        return;
+      }
+
+      button.disabled = false;
+    }
+
+    form.addEventListener('submit', runTask);
+  </script>
+</body>
+</html>
